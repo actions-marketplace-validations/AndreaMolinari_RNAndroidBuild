@@ -10,15 +10,15 @@ Usa questa action
 
 ### Usage
 ```yml
-uses: AndreaMolinari/actions/.github/workflows/craft-release.yml@test
-with:
-  alpha: true
-  beta: false
-secrets:
-  KEYSTORE64: ${{ secrets.KEYSTORE64 }}
-  ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-  ANDROID_ALIAS: ${{ secrets.ANDROID_ALIAS }}
-  ANDROID_ALIAS_PASS: ${{ secrets.ANDROID_ALIAS_PASS }}
-  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-  SERVICE_ACCOUNT_JSON: ${{ secrets.SERVICE_ACCOUNT_JSON }}
+    steps:
+      - uses: AndreaMolinari/RNAndroidBuild@main
+        with:
+          package-name: com.android.example
+        env:
+          KEYSTORE64: ${{ secrets.KEYSTORE64 }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_ALIAS: ${{ secrets.ANDROID_ALIAS }}
+          ANDROID_ALIAS_PASS: ${{ secrets.ANDROID_ALIAS_PASS }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          SERVICE_ACCOUNT_JSON: ${{ secrets.SERVICE_ACCOUNT_JSON }}
 ```
