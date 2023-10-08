@@ -1,0 +1,96 @@
+name: React Native Android Build
+
+on:
+  workflow_call:
+    inputs:
+      package-name:
+        required: true
+        type: string
+    secrets:
+      KEYSTORE64:
+        required: true
+      ANDROID_KEY_PASSWORD:
+        required: true
+      ANDROID_ALIAS:
+        required: true
+      ANDROID_ALIAS_PASS:
+        required: true
+      NPM_TOKEN:
+        required: false
+      SERVICE_ACCOUNT_JSON:
+        required: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # va fatto nel workflow
+      # - uses: actions/checkout@v4
+      - id: playstore
+        run: |
+          playstore=false
+          if [-n "${{secrets.SERVICE_ACCOUNT_JSON}}"]; then
+            playstore=true
+          fi
+          echo "PLAY_STORE=$playstore" >> $GITHUB_OUTPUT
+
+      - name: Decode Keystore
+        id: decode_keystore
+        uses: timheuer/base64-to-file@v1
+        with:
+          fileName: "release.keystore"
+          encodedString: ${{ secrets.KEYSTORE64 }}
+
+      - name: Copy keystore
+        run: cp ${{ steps.decode_keystore.outputs.filePath }} ./android/app
+
+      - name: Set Node Env
+        uses: actions/setup-node@v3
+        with:
+          token: ${{ secrets.NPM_TOKEN }}
+          node-version-file: .node-version
+
+      - name: Install dependeces
+        run: yarn install --frozen-lockfile
+
+      - name: Get version from package
+        id: package-version
+        uses: martinbeentjes/npm-get-version-action@v1.3.1
+
+      - name: Update gradle version
+        uses: damienaicheh/update-android-version-gradle-action@v1.0.0
+        with:
+          build-gradle-path: "./android/app/build.gradle"
+          version-code: ${{github.run_number}}
+          version-name: ${{steps.package-version.outputs.current-version}}
+          print-file: true
+
+      - name: Build Release Mode 🔨
+        id: build_release
+        run: cd android && ./gradlew bundleRelease
+        env:
+          SIGNING_STORE_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_ALIAS }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_ALIAS_PASS }}
+
+      - name: Upload Artifact
+        if: steps.playstore.outputs.PLAY_STORE == false
+        uses: actions/upload-artifact@v3
+        with:
+          name: app-release.aab
+          path: ./android/app/build/outputs/bundle/release
+
+      - name: Creazione file SERVICE_ACCOUNT_JSON
+        if: steps.playstore.outputs.PLAY_STORE == true
+        run: echo '${{ secrets.SERVICE_ACCOUNT_JSON }}' > service_account.json
+
+      - name: Deploy to Internal 🚀
+        if: steps.playstore.outputs.PLAY_STORE == true
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJson: service_account.json
+          packageName: ${{ inputs.package-name }}
+          releaseFiles: ./android/app/build/outputs/bundle/release/app-release.aab
+          track: internal
+          # whatsNewDirectory: distribution/ # se ho capito bene sono i changelog ma li vuole strani
