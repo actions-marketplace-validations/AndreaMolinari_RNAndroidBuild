@@ -11,9 +11,6 @@ runs:
   using: composite
   
   steps:
-    - name: Prova
-      uses: action@prova
-
     - id: playstore
       shell: bash
       env:
