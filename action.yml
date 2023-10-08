@@ -1,5 +1,9 @@
 name: React Native Android Build
 description: Build a React Native Android App and Deploy it on the Play Store
+author: Andrea Molinari
+branding:
+  color: purple
+  icon: arrow-up-circle
 
 
 inputs:
