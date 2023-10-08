@@ -1,5 +1,5 @@
 name: React Native Android Build
-description: Una cosa
+description: Build a React Native Android App and Deploy it on the Play Store
 
 
 inputs:
